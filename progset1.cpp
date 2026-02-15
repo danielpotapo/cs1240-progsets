@@ -9,24 +9,30 @@ vector<vector<int>> output;
 
 
 int main() {    
-    // generate random seed
-    srand(static_cast<unsigned int>(time(nullptr)));
-
+    // maximum and minimum number of nodes on graph
     int max_size = 10;
     int min_size = 1;
+
+    // generate random seed
+    random_device rd;
+    mt19937 engine(rd());
+    uniform_int_distribution<int> int_distribution(min_size, max_size);
+
+
     int graph_size = rand() % max_size + min_size;
 
+    // NOTE: IN PROGRESS. COMMENTED OUT BC RESULTS IN ERROR
     // fill and printadjacency matrix
-    for (int i = 0; i < graph_size; i++) {
-        graph.push_back(*(new vector<int>));
+    // for (int i = 0; i < graph_size; i++) {
+    //     graph.push_back(*(new vector<int>));
 
-        for (int j = 0; j < graph_size; j++) {
-            graph[i].push_back(rand() % 2);
-            cout << graph[i][j] << "  ";    
-        }
-        
-        cout << endl;
-    }    
+    //     for (int j = 0; j < graph_size; j++) {
+    //         // graph[i].push_back(int_distribution);
+    //         cout << graph[i][j] << "  ";    
+    //     }
+
+    //     cout << endl;
+    // }    
 
     return 0;
 }
