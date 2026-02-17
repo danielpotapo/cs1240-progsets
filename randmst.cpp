@@ -5,10 +5,23 @@
 
 using namespace std;
 
+
+/*
+NOTES TO DEREK:
+
+I've implemented setup for all of the n dimensional graphs in the helper function nDimensionalGraph
+
+I'm planning for the main logic to occur in main, calling helper functions as necessary
+
+TODO: add a helper function for Prim's algorithm, implement function hyperCubeGraph
+
+
+*/
+
 // formatting as an adjacency list
 vector<vector<double>> graph;
 
-void fillGraph(int points) {
+void nDimensionalGraph(int points, int dim) {
     // generate random seed
     random_device rd;
     mt19937 engine(rd());
@@ -18,7 +31,13 @@ void fillGraph(int points) {
     for (int i = 0; i < points; i++) {
         graph.push_back(*(new vector<double>));
         for (int j = 0; j < points; j++) {
-            graph[i].push_back(dis(engine));
+            double inner = 0; 
+
+            // set weight as distance for n dimensions
+            for (int k = 0; k < dim; k++) {
+                inner += pow(dis(engine) - dis(engine), 2.0);
+            }
+            graph[i].push_back(sqrt(inner));
         }
     }
 
@@ -33,15 +52,22 @@ void fillGraph(int points) {
     cout << endl;
 }
 
-int main(int argc, char* argv[]) {    
+void hyperCubeGraph(int points) {
 
+}
+
+
+
+
+
+int main(int argc, char* argv[]) {    
     int numpoints = stoi(argv[2]);
     int numtrials = stoi(argv[3]);
     int dimension = stoi(argv[4]);
 
     // dummy variables for testing purposes
     for (int i = 0; i < numtrials; i++) {
-        fillGraph(numpoints);
+        nDimensionalGraph(numpoints, 2);
     }
 
     return 0;

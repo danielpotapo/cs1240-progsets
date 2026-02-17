@@ -1,5 +1,5 @@
-progset1.exe: progset1.cpp
-	g++ -std=c++17 progset1.cpp -o progset1.exe
+randmst.exe: randmst.cpp
+	g++ -std=c++17 randmst.cpp -o randmst.exe
 
 # Capture any arguments after "run"
 ifeq (run,$(firstword $(MAKECMDGOALS)))
@@ -7,5 +7,5 @@ ifeq (run,$(firstword $(MAKECMDGOALS)))
   $(eval $(RUN_ARGS):;@:)
 endif
 
-run: progset1.exe
-	.\progset1.exe $(RUN_ARGS)
+run: randmst.exe
+	.\randmst.exe $(RUN_ARGS)
