@@ -1,42 +1,47 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <cassert>
 
 using namespace std;
 
-vector<vector<int>> graph;
-vector<vector<int>> output;
+// formatting as an adjacency list
+vector<vector<double>> graph;
 
-
-int main() {    
-    // maximum and minimum number of nodes on graph
-    int max_size = 10;
-    int min_size = 1;
-
+void fillGraph(int points) {
     // generate random seed
     random_device rd;
     mt19937 engine(rd());
-    uniform_int_distribution<int> int_distribution(min_size, max_size);
+    uniform_real_distribution<double> dis(0, 1);
 
+    // fill graph with points
+    for (int i = 0; i < points; i++) {
+        graph.push_back(*(new vector<double>));
+        for (int j = 0; j < points; j++) {
+            graph[i].push_back(dis(engine));
+        }
+    }
 
-    int graph_size = rand() % max_size + min_size;
-
-    // NOTE: IN PROGRESS. COMMENTED OUT BC RESULTS IN ERROR
-    // fill and printadjacency matrix
-    // for (int i = 0; i < graph_size; i++) {
-    //     graph.push_back(*(new vector<int>));
-
-    //     for (int j = 0; j < graph_size; j++) {
-    //         // graph[i].push_back(int_distribution);
-    //         cout << graph[i][j] << "  ";    
-    //     }
-
-    //     cout << endl;
-    // }    
-
-    return 0;
+    // print graph (for debugging purposes)
+    for (int i = 0; i < points; i++) {
+        for (int j = 0; j < points; j++) {
+            cout << graph[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+    cout << endl;
 }
 
-void prims(int size) {
-    return;
+int main() {    
+    // dummy variables for testing purposes
+    int numpoints = 5;
+    int numtrials = 3;
+    int dimension = 2;
+
+    for (int i = 0; i < numtrials; i++) {
+        fillGraph(numpoints);
+    }
+
+    return 0;
 }
