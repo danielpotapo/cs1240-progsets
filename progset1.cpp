@@ -33,12 +33,13 @@ void fillGraph(int points) {
     cout << endl;
 }
 
-int main() {    
-    // dummy variables for testing purposes
-    int numpoints = 5;
-    int numtrials = 3;
-    int dimension = 2;
+int main(int argc, char* argv[]) {    
 
+    int numpoints = stoi(argv[2]);
+    int numtrials = stoi(argv[3]);
+    int dimension = stoi(argv[4]);
+
+    // dummy variables for testing purposes
     for (int i = 0; i < numtrials; i++) {
         fillGraph(numpoints);
     }
