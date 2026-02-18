@@ -2,6 +2,7 @@
 #include <vector>
 #include <random>
 #include <cassert>
+#include <array>
 
 using namespace std;
 
@@ -9,17 +10,17 @@ using namespace std;
 /*
 NOTES TO DEREK:
 
-I've implemented setup for all of the n dimensional graphs in the helper function nDimensionalGraph
+I've implemented part of the prim's helper function. for now, it uses a less efficient
+algorithm for finding the minimum heap element, but we can optimze that later
 
-I'm planning for the main logic to occur in main, calling helper functions as necessary
-
-TODO: add a helper function for Prim's algorithm, implement function hyperCubeGraph
+TODO: finish prims, main logic, optimize heap minimizing
 
 
 */
 
-// formatting as an adjacency list
-vector<vector<double>> graph;
+vector<vector<double>> graph;         // representation of graph as an adjacency list
+vector<double> distances;             // distance to each node (for prims)
+vector<array<double, 2>> heap;        // heap (for prims)
 
 void nDimensionalGraph(int points, int dim) {
     // generate random seed
@@ -54,6 +55,57 @@ void nDimensionalGraph(int points, int dim) {
 
 void hyperCubeGraph(int points) {
 
+}
+
+// inefficient minimum algorithm. returns index with minimum value in heap
+int findMin() {
+    double min = heap[0][1];
+    int minIndex = 0;
+    for (int i = 1; i < heap.size(); i++) {
+        if (heap[i][1] < min) {
+            min = heap[i][1];
+            minIndex = i;
+        }
+    }
+    return minIndex;
+}
+
+// prim's algorithm
+void prims(int point) {
+    assert(point > 0);
+    double prev;                  // previous node
+    array<double, 2> current;     // current node
+    vector<array<double, 2>> result;
+
+    for (int i = 0; i < point; i++) {
+        distances.push_back(100.0);
+    }
+
+    distances[0] = 0;
+    heap.push_back({0, 0});
+    prev = -1;
+
+    while (heap.size() > 0) {
+        int minIndex = findMin();
+        current = heap[minIndex];
+        heap.erase(heap.begin() + minIndex);
+        
+        for (int i = 0; i < point; i++) {
+            // current[0]: node, current[1]: distance
+            // skip distance to itself
+            if (i == current[0]) {
+                continue;
+            }
+
+            if (distances[i] > graph[current[0]][i]) {
+                // do things
+                // i have to go to sleep, but pr
+
+            }
+
+        }
+
+    }
 }
 
 
