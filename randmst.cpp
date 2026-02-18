@@ -19,32 +19,71 @@ TODO: finish prims, main logic, optimize heap minimizing
 */
 
 vector<vector<double>> graph;         // representation of graph as an adjacency list
-vector<double> distances;             // distance to each node (for prims)
-vector<array<double, 2>> heap;        // heap (for prims)
 
-void nDimensionalGraph(int points, int dim) {
-    // generate random seed
-    random_device rd;
-    mt19937 engine(rd());
-    uniform_real_distribution<double> dis(0, 1);
 
+
+double generateWeight(uniform_real_distribution<double> dis, mt19937 engine, int dim) {
+    // weights for uniform and hypercube uniformly random 
+    if (dim == 0 || dim == 1) {
+        return dis(engine);
+    } 
+
+    // weights for dim >= 2 are the euclidean distance between the points
+    double inner = 0;
+    for (int k = 0; k < dim; k++) {
+        inner += pow(dis(engine) - dis(engine), 2.0);
+    }
+    return sqrt(inner);
+}
+
+void nDimensionalGraph(int points) {
+    
     // fill graph with points
     for (int i = 0; i < points; i++) {
         graph.push_back(*(new vector<double>));
         for (int j = 0; j < points; j++) {
-            double inner = 0; 
-
-            // set weight as distance for n dimensions
-            for (int k = 0; k < dim; k++) {
-                inner += pow(dis(engine) - dis(engine), 2.0);
+            // avoid edge to itself
+            if (i == j) {
+                continue;
             }
-            graph[i].push_back(sqrt(inner));
+            graph[i].push_back(j);
         }
     }
 
     // print graph (for debugging purposes)
     for (int i = 0; i < points; i++) {
+        for (int j = 0; j < graph[i].size(); j++) {
+            cout << graph[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+    cout << endl;
+    cout << endl;
+}
+
+void hyperCubeGraph(int points) {
+    // fill graph with points
+    for (int i = 0; i < points; i++) {
+        graph.push_back(*(new vector<double>));
         for (int j = 0; j < points; j++) {
+            // avoid edge to itself
+            if (i == j) {
+                continue;
+            }
+
+            int roundedLog = (int) (log2(abs((double) (j-i))));
+            bool hyperCondition = (double) pow(2, roundedLog) == (double) abs(j-i);
+
+            if (hyperCondition) {
+                graph[i].push_back(j);
+            } 
+        }
+    }
+
+    // print graph (for debugging purposes)
+    for (int i = 0; i < points; i++) {
+        for (int j = 0; j < graph[i].size(); j++) {
             cout << graph[i][j] << " ";
         }
         cout << endl;
@@ -53,9 +92,18 @@ void nDimensionalGraph(int points, int dim) {
     cout << endl;
 }
 
-void hyperCubeGraph(int points) {
 
-}
+struct Vertex {
+    int rank;
+    int vertex;
+    Vertex* parent;
+};
+
+vector<array<double, 2>> heap;        // heap (for prims)
+vector<Vertex> vertices;              // vector of linked lists
+
+
+
 
 // inefficient minimum algorithm. returns index with minimum value in heap
 int findMin() {
@@ -70,46 +118,41 @@ int findMin() {
     return minIndex;
 }
 
-// prim's algorithm
-void prims(int point) {
-    assert(point > 0);
-    double prev;                  // previous node
-    array<double, 2> current;     // current node
-    vector<array<double, 2>> result;
+// E is union find set
 
-    for (int i = 0; i < point; i++) {
-        distances.push_back(100.0);
+void makeSet() {
+    Vertex x;
+    x.rank = 0;
+    x.parent = &x;
+    vertices.push_back(x);
+}
+
+Vertex* find(Vertex x) {
+    if (x.vertex != (*x.parent).vertex) {
+        x.parent = find(*x.parent);
     }
+    return x.parent;
+}
 
-    distances[0] = 0;
-    heap.push_back({0, 0});
-    prev = -1;
+void union(Vertex x, Vertex y) {
 
-    while (heap.size() > 0) {
-        int minIndex = findMin();
-        current = heap[minIndex];
-        heap.erase(heap.begin() + minIndex);
-        
-        for (int i = 0; i < point; i++) {
-            // current[0]: node, current[1]: distance
-            // skip distance to itself
-            if (i == current[0]) {
-                continue;
-            }
+}
 
-            if (distances[i] > graph[current[0]][i]) {
-                // do things
-                // i have to go to sleep, but pr
-
-            }
-
-        }
-
+Vertex link(Vertex x, Vertex y) {
+    if (x.rank > y.rank) {
+        return link(y, x);
+    } else if (x.rank == y.rank) {
+        y.rank = y.rank + 1;
     }
+    x.parent = &y;
+    return y;
 }
 
 
 
+int kruskal() {
+
+}
 
 
 int main(int argc, char* argv[]) {    
@@ -117,10 +160,28 @@ int main(int argc, char* argv[]) {
     int numtrials = stoi(argv[3]);
     int dimension = stoi(argv[4]);
 
-    // dummy variables for testing purposes
-    for (int i = 0; i < numtrials; i++) {
-        nDimensionalGraph(numpoints, 2);
-    }
+    // remember to clear the graph afterwards
+
+    cout << "hypercube" << endl;
+    hyperCubeGraph(numpoints);
+    // cout << "ndimensional" << endl;
+    // nDimensionalGraph(numpoints);
+    
 
     return 0;
 }
+
+
+/*
+We will need this later.
+
+generate random seed
+random_device rd;
+mt19937 engine(rd());
+uniform_real_distribution<double> dis(0, 1);
+
+
+
+
+
+*/
