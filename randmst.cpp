@@ -116,8 +116,8 @@ double kruskal(int dim, int num_vert) {
 
     // create set of edges and sort them
     for (int i = 0; i < num_vert; i++) {
-        for (int j = 0; i < num_vert; i++) {
-            if (dim == 1 && hypercubeCondition || dim != 1 && nDimensionalCondition) {
+        for (int j = 0; j < num_vert; j++) {
+            if (dim == 1 && hypercubeCondition(i, j) || dim != 1 && nDimensionalCondition(i, j)) {
                 Ed add;
                 add.start = &vertices[i];    // vertices is initially sorted in increasing order
                 add.end = &vertices[j];
