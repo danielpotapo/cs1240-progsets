@@ -22,7 +22,6 @@ struct Ed {
     double weight;
 };
 
-vector<vector<double>> graph;         // representation of graph as an adjacency list
 vector<Vert> vertices;                // set of vertices for kruskal's algorithm
 vector<Ed> output;                    // set of edges for kruskal's algorithm
 
@@ -46,45 +45,27 @@ double generateWeight(int dim) {
     return sqrt(inner);
 }
 
-void nDimensionalGraph(int points) {
-    // fill graph with points
-    for (int i = 0; i < points; i++) {
-        graph.push_back(*(new vector<double>));
-        for (int j = 0; j < points; j++) {
-            // avoid edge to itself
-            if (i == j) {
-                continue;
-            }
-            graph[i].push_back(j);
-        }
+bool nDimensionalCondition(int i, int j) {    
+    // avoid edge to itself
+    if (i == j) {
+        return false;
     }
-
-    // for (int i = 0; i < graph.size(); i++) {
-    //     for (int j = 0; j < graph[i].size(); j++) {
-    //         cout << graph[i][j] << " ";
-    //     }
-    //     cout << endl;
-    // }
+    return true;
 }
 
-void hyperCubeGraph(int points) {
-    // fill graph with points
-    for (int i = 0; i < points; i++) {
-        graph.push_back(*(new vector<double>));
-        for (int j = 0; j < points; j++) {
-            // avoid edge to itself
-            if (i == j) {
-                continue;
-            }
-
-            int roundedLog = (int) (log2(abs((double) (j-i))));
-            bool hyperCondition = (double) pow(2, roundedLog) == (double) abs(j-i);
-
-            if (hyperCondition) {
-                graph[i].push_back(j);
-            } 
-        }
+bool hypercubeCondition(int i, int j) {
+    // avoid edge to itself
+    if (i == j) {
+        return false;
     }
+
+    int roundedLog = (int) (log2(abs((double) (j-i))));
+    bool hyperCondition = (double) pow(2, roundedLog) == (double) abs(j-i);
+
+    if (hyperCondition) {
+        return true;
+    } 
+    return false;
 
 }
 
@@ -114,34 +95,35 @@ void link(Vert& x, Vert& y) {
 }
 
 void createUnion(Vert& x, Vert& y) {
-    cout << "union between " << x.vertex << " and " << y.vertex << endl;
     link(*find(x), *find(y));
     return;
 }
 
 
-double kruskal(int dim) {
+double kruskal(int dim, int num_vert) {
     // output: X
     // vertices: set of trees
     vector<Ed> edges;  // set of edges
 
-    vertices.reserve(graph.size()); 
+    vertices.reserve(num_vert); 
 
     // make set u
-    for (int i = 0; i < graph.size(); i++) {
+    for (int i = 0; i < num_vert; i++) {
         Vert add;
         add.vertex = i;
         makeSet(add);
     }
 
     // create set of edges and sort them
-    for (int i = 0; i < graph.size(); i++) {
-        for (int j = 0; j < graph[i].size(); j++) {
-            Ed add;
-            add.start = &vertices[i];    // vertices is initially sorted in increasing order
-            add.end = &vertices[j];
-            add.weight = generateWeight(dim);
-            edges.push_back(add);
+    for (int i = 0; i < num_vert; i++) {
+        for (int j = 0; i < num_vert; i++) {
+            if (dim == 1 && hypercubeCondition || dim != 1 && nDimensionalCondition) {
+                Ed add;
+                add.start = &vertices[i];    // vertices is initially sorted in increasing order
+                add.end = &vertices[j];
+                add.weight = generateWeight(dim);
+                edges.push_back(add);
+            }
         }
     }
 
@@ -153,9 +135,7 @@ double kruskal(int dim) {
     
     // main kruskal's algorithm logic
     for (int i = 0; i < edges.size(); i++) {     
-        cout << i << endl;   
         if ((*find(*edges[i].start)).vertex != (*find(*edges[i].end)).vertex) {
-            cout << "edges " << (*find(*edges[i].start)).vertex << " vs " << (*find(*edges[i].end)).vertex << endl;
             output.push_back(edges[i]);
             createUnion(*edges[i].start, *edges[i].end);
         }
@@ -165,13 +145,6 @@ double kruskal(int dim) {
     for (int i = 0; i < output.size(); i++) {
         total_weight += output[i].weight;
     }
-
-    cout << "MINIMUM SPANNING WEIGHTS" << endl;
-
-    for (int i = 0; i < output.size(); i++) {
-        cout << output[i].weight << endl;
-    }
-    cout << "NEXT TRIAL" << endl;
 
     return total_weight;
 }
@@ -187,15 +160,9 @@ int main(int argc, char* argv[]) {
 
     double result = 0;
     for (int i = 0; i < numtrials; i++) {
-        if (dimension == 1) {
-            hyperCubeGraph(numpoints);
-        } else {
-            nDimensionalGraph(numpoints);
-        }
         
-        result += kruskal(dimension);
+        result += kruskal(dimension, numpoints);
 
-        graph.clear();
         vertices.clear();
         output.clear();
     }
