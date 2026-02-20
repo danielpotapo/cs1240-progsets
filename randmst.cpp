@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <cmath>
+#include <cstdint>
 #include <random>
 #include <cassert>
 #include <array>
@@ -7,6 +9,11 @@
 
 using namespace std;
 
+// Mersenne Twister RNG stuff. Pseudo rng for preserving independence across different trials. source: https://codereview.stackexchange.com/questions/180063/mersenne-twister-random-number-generator-function?lq=1
+mt19937 rng; 
+vector<vector<double>> points; // points[i]= coordinate vector for vertex i (dim >= 2)
+double maxWeight = 0;
+double avgWeight = 0;
 
 // vertex definition
 struct Vert {
@@ -28,21 +35,30 @@ vector<Ed> output;                    // set of edges for kruskal's algorithm
 
 //-------------------------------- graph generation ----------------------------------------//
 
-double generateWeight(int dim) {
-    random_device rd;
-    mt19937 engine(rd());
+double generateUniformWeight() {
     uniform_real_distribution<double> dis(0, 1);
+    return dis(rng);
+}
 
-    // weights for uniform and hypercube uniformly random 
-    if (dim == 0 || dim == 1) {
-        return dis(engine);
-    } 
-    // weights for dim >= 2 are the euclidean distance between the points
+double generateEuclideanDistance(int i, int j, int dim) {
     double inner = 0;
     for (int k = 0; k < dim; k++) {
-        inner += pow(dis(engine) - dis(engine), 2.0);
+        inner += pow(points[i][k] - points[j][k], 2.0);
     }
     return sqrt(inner);
+}
+
+void generatePoints(int num_vert, int dim) {
+    uniform_real_distribution<double> dis(0, 1);
+
+    points.clear();
+    points.resize(num_vert, vector<double>(dim));
+
+    for (int i = 0; i < num_vert; i++) {
+        for (int k = 0; k < dim; k++) {
+            points[i][k] = dis(rng);
+        }
+    }
 }
 
 bool nDimensionalCondition(int i, int j) {    
@@ -59,14 +75,13 @@ bool hypercubeCondition(int i, int j) {
         return false;
     }
 
-    int roundedLog = (int) (log2(abs((double) (j-i))));
-    bool hyperCondition = (double) pow(2, roundedLog) == (double) abs(j-i);
+    int diff = abs(j - i);
+    bool hyperCondition = (diff > 0) && ((diff & (diff - 1)) == 0);
 
     if (hyperCondition) {
         return true;
     } 
     return false;
-
 }
 
 //-------------------------------- kruskal's algorithm ----------------------------------------//
@@ -106,6 +121,10 @@ double kruskal(int dim, int num_vert) {
     vector<Ed> edges;  // set of edges
 
     vertices.reserve(num_vert); 
+    // generate points for Euclidean graphs
+    if (dim >= 2) {
+        generatePoints(num_vert, dim);
+    }
 
     // make set u
     for (int i = 0; i < num_vert; i++) {
@@ -116,35 +135,58 @@ double kruskal(int dim, int num_vert) {
 
     // create set of edges and sort them
     for (int i = 0; i < num_vert; i++) {
-        for (int j = 0; j < num_vert; j++) {
+        for (int j = i + 1; j < num_vert; j++) {
             if (dim == 1 && hypercubeCondition(i, j) || dim != 1 && nDimensionalCondition(i, j)) {
                 Ed add;
-                add.start = &vertices[i];    // vertices is initially sorted in increasing order
+                add.start = &vertices[i];
                 add.end = &vertices[j];
-                add.weight = generateWeight(dim);
+
+                // weight logic (correct models)
+                if (dim == 0 || dim == 1) {
+                    add.weight = generateUniformWeight();
+                } 
+                else {
+                    add.weight = generateEuclideanDistance(i, j, dim);
+                }
+
                 edges.push_back(add);
             }
         }
     }
 
-
     sort(edges.begin(), edges.end(), [](const Ed& a, const Ed& b) {
         return a.weight < b.weight;
     });
 
-    
     // main kruskal's algorithm logic
+    int picked = 0;
+
     for (int i = 0; i < edges.size(); i++) {     
         if ((*find(*edges[i].start)).vertex != (*find(*edges[i].end)).vertex) {
+
             output.push_back(edges[i]);
             createUnion(*edges[i].start, *edges[i].end);
+
+            picked++;
+
+            if (picked == num_vert - 1) {
+                break;
+            }
         }
     }
+
+    assert(picked == num_vert - 1);
 
     double total_weight = 0;
     for (int i = 0; i < output.size(); i++) {
         total_weight += output[i].weight;
+        if (output[i].weight > maxWeight) {
+            maxWeight = output[i].weight;
+        }
+        avgWeight += output[i].weight;
     }
+
+    avgWeight += total_weight;
 
     return total_weight;
 }
@@ -152,6 +194,7 @@ double kruskal(int dim, int num_vert) {
 //-------------------------------- main test logic sequence  -------------------------------------//
 
 int main(int argc, char* argv[]) {    
+    int testing = stoi(argv[1]);
     int numpoints = stoi(argv[2]);
     int numtrials = stoi(argv[3]);
     int dimension = stoi(argv[4]);
@@ -159,17 +202,53 @@ int main(int argc, char* argv[]) {
     // remember to clear the graph afterwards
 
     double result = 0;
-    for (int i = 0; i < numtrials; i++) {
-        
-        result += kruskal(dimension, numpoints);
 
-        vertices.clear();
-        output.clear();
+    if (testing == 1) {
+        for (int k = 0; k <= 4; k++) {
+            cout << "---------- DIMENSION = " << k << "------------" << endl;
+            for (int j = 7; j < 12; j++) {
+                numpoints = pow(2.0, j);
+                for (int i = 0; i < numtrials; i++) {
+                    // seed randomness once per trial
+                    random_device rd;
+                    rng.seed(rd());
+                    
+                    result += kruskal(dimension, numpoints);
+
+                    vertices.clear();
+                    output.clear();
+                }     
+
+            avgWeight = avgWeight / numtrials;
+
+            cout << "TRIAL for ntrials = " << pow(2.0, j) << ": " << endl;
+            cout << "maximum: " << maxWeight << endl;
+            cout << "avg: " << avgWeight << endl;
+            
+            maxWeight = 0;
+            avgWeight = 0;
+            }
+        }
+        
+        
+    } else {
+        for (int i = 0; i < numtrials; i++) {
+            // seed randomness once per trial
+            random_device rd;
+            rng.seed(rd());
+            
+            result += kruskal(dimension, numpoints);
+
+            vertices.clear();
+            output.clear();
+        }
     }
+    
 
     result = result/numtrials;
-
-    cout << "Final Result: " << result << endl;
+    // Note to Daniel: I tweaked the output format to match the format asked for in the pdf
+    cout << result << " " << numpoints << " " << numtrials << " " << dimension << endl;
+    
     
     return 0;
 }
