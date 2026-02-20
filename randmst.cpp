@@ -183,7 +183,6 @@ double kruskal(int dim, int num_vert) {
         if (output[i].weight > maxWeight) {
             maxWeight = output[i].weight;
         }
-        avgWeight += output[i].weight;
     }
 
     avgWeight += total_weight;
@@ -204,29 +203,28 @@ int main(int argc, char* argv[]) {
     double result = 0;
 
     if (testing == 1) {
-        for (int k = 0; k <= 4; k++) {
+        for (int k = 1; k <= 4; k++) {
             cout << "---------- DIMENSION = " << k << "------------" << endl;
-            for (int j = 7; j < 12; j++) {
+            for (int j = 7; j <= 11; j++) {
                 numpoints = pow(2.0, j);
                 for (int i = 0; i < numtrials; i++) {
                     // seed randomness once per trial
                     random_device rd;
                     rng.seed(rd());
                     
-                    result += kruskal(dimension, numpoints);
+                    result += kruskal(k, numpoints);
 
                     vertices.clear();
                     output.clear();
                 }     
+                avgWeight = avgWeight / numtrials;
 
-            avgWeight = avgWeight / numtrials;
-
-            cout << "TRIAL for ntrials = " << pow(2.0, j) << ": " << endl;
-            cout << "maximum: " << maxWeight << endl;
-            cout << "avg: " << avgWeight << endl;
-            
-            maxWeight = 0;
-            avgWeight = 0;
+                cout << "TRIAL for npoints = " << pow(2.0, j) << ": " << endl;
+                cout << "maximum: " << maxWeight << endl;
+                // cout << "avg: " << avgWeight << endl;
+                
+                maxWeight = 0;
+                avgWeight = 0;
             }
         }
         
@@ -242,12 +240,13 @@ int main(int argc, char* argv[]) {
             vertices.clear();
             output.clear();
         }
+        result = result/numtrials;
+        // Note to Daniel: I tweaked the output format to match the format asked for in the pdf
+        cout << result << " " << numpoints << " " << numtrials << " " << dimension << endl;
+
     }
     
 
-    result = result/numtrials;
-    // Note to Daniel: I tweaked the output format to match the format asked for in the pdf
-    cout << result << " " << numpoints << " " << numtrials << " " << dimension << endl;
     
     
     return 0;
