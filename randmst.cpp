@@ -207,7 +207,7 @@ int main(int argc, char* argv[]) {
             cout << "---------- DIMENSION = " << k << "------------" << endl;
             for (int j = 7; j <= 11; j++) {
                 numpoints = pow(2.0, j);
-                for (int i = 0; i < numtrials; i++) {0
+                for (int i = 0; i < numtrials; i++) {
                     // seed randomness once per trial
                     random_device rd;
                     rng.seed(rd());
