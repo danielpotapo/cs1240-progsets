@@ -49,6 +49,15 @@ void print(vector<vector<int>> mat) {
 }
 
 
+void print_diag(vector<vector<int>> mat) {
+    for (int i = 0; i < mat.size(); i++) {
+        cout << mat[i][i] << endl;
+    }
+}
+
+
+
+
 
 vector<vector<int>> add(vector<vector<int>> one, vector<vector<int>> two, int size) {
     vector<vector<int>> result = one;
@@ -212,27 +221,63 @@ int main(int argc, char* argv[]) {
     getline(reader, a_str);
     getline(reader, b_str);
     reader.close();
+    int nskipped = 0;
+    int index = 0;
+
+    cout << a_str << endl;
+    cout << b_str << endl;
+
+    return 1;
 
     // fill vector representations of the arrays
     for (int row = 0; row < dim; row++) {
-        mat_a.push_back(*(new vector<int>));
-        mat_b.push_back(*(new vector<int>));
-        for (int col = 0; col < dim; col++) {
-            mat_a[row].push_back(a_str.at(row * dim + col) - '0');  // ascii trick to convert char to int
-            mat_b[row].push_back(b_str.at(row * dim + col) - '0');
+        mat_a.push_back(vector<int>());
+        nskipped = 0;
+        for (int col = 0; col - nskipped < dim;) {
+            if (a_str.at(index) == '-') {
+                mat_a[row].push_back(stoi(a_str.substr(index, 2)));
+                col+=2;
+                index+=2;
+                nskipped++;
+                continue;
+            }
+            mat_a[row].push_back(a_str.at(index) - '0');  // ascii trick to convert char to int
+            col++;
+            index++;
         }
     }
 
+    index = 0;
+    for (int row = 0; row < dim; row++) {
+        mat_b.push_back(vector<int>());
+        nskipped = 0;
+        for (int col = 0; col - nskipped < dim;) {
+            if (b_str.at(index) == '-') {
+                mat_b[row].push_back(stoi(b_str.substr(index, 2)));
+                col+=2;
+                index+=2;
+                nskipped++;
+                continue;
+            }
+            mat_b[row].push_back(b_str.at(index) - '0');  // ascii trick to convert char to int
+            col++;
+            index++;
+        }
+    }
+
+
+
+
     // print both matrices (bug checking)
-    cout << "MATRIX A" << endl;
-    print(mat_a);
+    // cout << "MATRIX A" << endl;
+    // print(mat_a);
 
-    cout << "MATRIX B" << endl;
-    print(mat_b);
+    // cout << "MATRIX B" << endl;
+    // print(mat_b);
 
-    cout << "dim: " << dim << endl;
+    // cout << "dim: " << dim << endl;
 
-    print(multiply(mat_a, mat_b));
+    print_diag(multiply(mat_a, mat_b));
 
     return 0;
 }
