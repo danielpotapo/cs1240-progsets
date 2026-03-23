@@ -1,29 +1,42 @@
 /*
 NOTES TO DEREK:
 
+
 to run the program, run "make", then "./strassen <flag> <dimension> matrix.txt"
+
 
 NOTE: I restructured some of the files; make sure you're in the progset2 directory
 
+
 the first line of matrix.txt represents matrix A, second line represents matrix B
+
 
 i is row, j is column
 
+
 idea: add padding to bottom and right edges of matrix if it's an odd number (must prove that this works)
+
+
 
 
 ptr to an element of a vector: int* ptr = &vec.at(<index>);
 */
 
 
+
+
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
+#include <cassert>
+#include <chrono>
 
-#define MAT_A 0
-#define MAT_B 1
-
+// using chrono::high_resolution_clock;
+// using chrono::duration_cast;
+// using chrono::duration;
+// using chrono::milliseconds;
 using namespace std;
 
 vector<vector<int>> mat_a;
@@ -32,11 +45,9 @@ vector<vector<int>> output;
 
 
 int flag;       // user-provided flag
-int dim;        // dimension of matrix 
+int dim;        // dimension of matrix
+int threshold;
 
-
-// general idea: use the output double vector for all storage to avoid
-// unnecessary allocation/deallocation
 
 
 void print(vector<vector<int>> mat) {
@@ -56,9 +67,6 @@ void print_diag(vector<vector<int>> mat) {
 }
 
 
-
-
-
 vector<vector<int>> add(vector<vector<int>> one, vector<vector<int>> two, int size) {
     vector<vector<int>> result = one;
 
@@ -69,6 +77,7 @@ vector<vector<int>> add(vector<vector<int>> one, vector<vector<int>> two, int si
     }
     return result;
 }
+
 
 vector<vector<int>> subtract(vector<vector<int>> one, vector<vector<int>> two, int size) {
     vector<vector<int>> result = one;
@@ -81,21 +90,47 @@ vector<vector<int>> subtract(vector<vector<int>> one, vector<vector<int>> two, i
     return result;
 }
 
+
 // start_col, start_row is the top left element
 
+vector<vector<int>> naive_multiply(vector<vector<int>> one, vector<vector<int>> two) {
+    vector<vector<int>> result = one;
+
+    for (int row = 0; row < one.size(); row++) {
+        for (int col = 0; col < one.size(); col++) {
+            int sum = 0;
+            for (int element = 0; element < one.size(); element++) {
+                sum += (one[row][element] * two[element][col]);
+            }
+            result[row][col] = sum;   
+        }
+    }
+
+    return result;
+}
+
+
 vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {   // start is the top left
+    
+    if (one.size() <= threshold) {
+        return naive_multiply(one, two);
+    }
+    
     int prune = 0;
     vector<vector<int>> result = one;
+
 
     if (one.size() % 2 != 0 && one.size() != 1) {
         prune = 1;
         one.push_back(vector<int>());
         two.push_back(vector<int>());
 
+
         for (int i = 0; i < one[0].size(); i++) {
             one[one.size() - 1].push_back(0);
             two[two.size() - 1].push_back(0);
         }
+
 
         for (int i = 0; i < one.size(); i++) {
             one[i].push_back(0);
@@ -103,16 +138,15 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {
         }
     }
 
-
-    
-
     int size = one.size();
+
 
      // base case
     if (size == 1) {
         result[0][0] *= two[0][0];
         return result;
     }
+
 
     // eventually change this to indices of a single matrix
     vector<vector<int>> a;
@@ -125,6 +159,8 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {
     vector<vector<int>> h;
 
 
+
+
     for (int i = 0; i < size/2; i++) {
         a.push_back(vector<int>());
         e.push_back(vector<int>());
@@ -133,6 +169,7 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {
             e[i].push_back(two[i][j]);
         }
     }
+
 
     for (int i = size/2; i < size; i++) {
         c.push_back(vector<int>());
@@ -143,6 +180,7 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {
         }
     }
 
+
     for (int i = 0; i < size/2; i++) {
         b.push_back(vector<int>());
         f.push_back(vector<int>());
@@ -151,6 +189,7 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {
             f[i].push_back(two[i][j]);
         }
     }
+
 
     for (int i = size/2; i < size; i++) {
         d.push_back(vector<int>());
@@ -161,6 +200,7 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {
         }
     }
 
+
     // this will have to change later for cases that aren't multiples of 2
     vector<vector<int>> p1 = multiply(a, subtract(f, h, size/2));
     vector<vector<int>> p2 = multiply(add(a, b, size/2), h);
@@ -170,10 +210,12 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {
     vector<vector<int>> p6 = multiply(subtract(b, d, size/2), add(g, h, size/2));
     vector<vector<int>> p7 = multiply(subtract(c, a, size/2), add(e, f, size/2));
 
+
     vector<vector<int>> top_left = add(add(p4, p5, size/2), subtract(p6, p2, size/2), size/2);
     vector<vector<int>> top_right = add(p1, p2, size/2);
     vector<vector<int>> bottom_left = add(p3, p4, size/2);
     vector<vector<int>> bottom_right = add(add(p5, p7, size/2), subtract(p1, p3, size/2), size/2);
+
 
     for (int i = 0; i < size - prune; i++) {
         for (int j = 0; j < size - prune; j++) {
@@ -187,16 +229,9 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {
                 result[i][j] = bottom_right[i - size/2][j - size/2];
             }
         }
-    }
-
-
-
-
+    }    
     return result;
 }
-
-
-
 
 
 int main(int argc, char* argv[]) {
@@ -204,93 +239,58 @@ int main(int argc, char* argv[]) {
         cout << "not enough args" << endl;
         return 1;
     }
-
-    string a_str;       // matrix A
-    string b_str;       // matrix B
-
+    
+    string line;
     flag = stoi(argv[1]);
     dim = stoi(argv[2]);
     string file_name = argv[3];
+
 
     fstream reader(file_name);
     if (!reader.is_open()) {
         cout << "invalid file" << endl;
         return 1;
-    }
+        }    
 
-    getline(reader, a_str);
-    getline(reader, b_str);
-    reader.close();
-    int nskipped = 0;
-    int index = 0;
-
-    cout << a_str << endl;
-    cout << b_str << endl;
-
-    return 1;
+    // if (a_str.size() < dim * dim || b_str.size() < dim * dim) {
+    //     cout << a_vec.size() << " AND " << b_vec.size() << endl;
+    //     return 0;
+    // }
 
     // fill vector representations of the arrays
     for (int row = 0; row < dim; row++) {
         mat_a.push_back(vector<int>());
-        nskipped = 0;
-        for (int col = 0; col - nskipped < dim;) {
-            if (a_str.at(index) == '-') {
-                mat_a[row].push_back(stoi(a_str.substr(index, 2)));
-                col+=2;
-                index+=2;
-                nskipped++;
-                continue;
-            }
-            mat_a[row].push_back(a_str.at(index) - '0');  // ascii trick to convert char to int
-            col++;
-            index++;
+        for (int col = 0; col < dim; col++) {
+            getline(reader, line);
+            mat_a[row].push_back(stoi(line));  // ascii trick to convert char to int
         }
     }
 
-    index = 0;
+
     for (int row = 0; row < dim; row++) {
         mat_b.push_back(vector<int>());
-        nskipped = 0;
-        for (int col = 0; col - nskipped < dim;) {
-            if (b_str.at(index) == '-') {
-                mat_b[row].push_back(stoi(b_str.substr(index, 2)));
-                col+=2;
-                index+=2;
-                nskipped++;
-                continue;
-            }
-            mat_b[row].push_back(b_str.at(index) - '0');  // ascii trick to convert char to int
-            col++;
-            index++;
+        for (int col = 0; col < dim; col++) {
+            getline(reader, line);
+            mat_b[row].push_back(stoi(line));
         }
     }
 
-
-
+    reader.close();
 
     // print both matrices (bug checking)
     // cout << "MATRIX A" << endl;
     // print(mat_a);
 
+
     // cout << "MATRIX B" << endl;
     // print(mat_b);
 
-    // cout << "dim: " << dim << endl;
 
+    // cout << "OUTPUT" << endl;
+
+    threshold = 5;
     print_diag(multiply(mat_a, mat_b));
+
 
     return 0;
 }
-
-
-/*
-    for (int i = 0; i < dim; i++) {
-        cout << endl;
-        for (int j = 0; j < dim; j++) {
-            cout << " " << b[i][j] << " ";
-        }
-    }
-
-
-
-*/
