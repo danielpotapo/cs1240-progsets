@@ -74,16 +74,36 @@ vector<vector<int>> subtract(vector<vector<int>> one, vector<vector<int>> two, i
 
 // start_col, start_row is the top left element
 
-vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two, int size) {   // start is the top left
-
+vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {   // start is the top left
+    int prune = 0;
     vector<vector<int>> result = one;
+
+    if (one.size() % 2 != 0 && one.size() != 1) {
+        prune = 1;
+        one.push_back(vector<int>());
+        two.push_back(vector<int>());
+
+        for (int i = 0; i < one[0].size(); i++) {
+            one[one.size() - 1].push_back(0);
+            two[two.size() - 1].push_back(0);
+        }
+
+        for (int i = 0; i < one.size(); i++) {
+            one[i].push_back(0);
+            two[i].push_back(0);
+        }
+    }
+
+
+    
+
+    int size = one.size();
 
      // base case
     if (size == 1) {
         result[0][0] *= two[0][0];
         return result;
     }
-
 
     // eventually change this to indices of a single matrix
     vector<vector<int>> a;
@@ -97,8 +117,8 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two, i
 
 
     for (int i = 0; i < size/2; i++) {
-        a.push_back(*(new vector<int>));
-        e.push_back(*(new vector<int>));
+        a.push_back(vector<int>());
+        e.push_back(vector<int>());
         for (int j = 0; j < size/2; j++) {
             a[i].push_back(one[i][j]);
             e[i].push_back(two[i][j]);
@@ -106,8 +126,8 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two, i
     }
 
     for (int i = size/2; i < size; i++) {
-        c.push_back(*(new vector<int>));
-        g.push_back(*(new vector<int>));
+        c.push_back(vector<int>());
+        g.push_back(vector<int>());
         for (int j = 0; j < size/2; j++) {
             c[i - size/2].push_back(one[i][j]);
             g[i - size/2].push_back(two[i][j]);
@@ -115,8 +135,8 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two, i
     }
 
     for (int i = 0; i < size/2; i++) {
-        b.push_back(*(new vector<int>));
-        f.push_back(*(new vector<int>));
+        b.push_back(vector<int>());
+        f.push_back(vector<int>());
         for (int j = size/2; j < size; j++) {
             b[i].push_back(one[i][j]);
             f[i].push_back(two[i][j]);
@@ -124,8 +144,8 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two, i
     }
 
     for (int i = size/2; i < size; i++) {
-        d.push_back(*(new vector<int>));
-        h.push_back(*(new vector<int>));
+        d.push_back(vector<int>());
+        h.push_back(vector<int>());
         for (int j = size/2; j < size; j++) {
             d[i - size/2].push_back(one[i][j]);
             h[i - size/2].push_back(two[i][j]);
@@ -133,21 +153,21 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two, i
     }
 
     // this will have to change later for cases that aren't multiples of 2
-    vector<vector<int>> p1 = multiply(a, subtract(f, h, size/2), size/2);
-    vector<vector<int>> p2 = multiply(add(a, b, size/2), h, size/2);
-    vector<vector<int>> p3 = multiply(add(c, d, size/2), e, size/2);
-    vector<vector<int>> p4 = multiply(d, subtract(g, e, size/2), size/2);
-    vector<vector<int>> p5 = multiply(add(a, d, size/2), add(e, h, size/2), size/2);
-    vector<vector<int>> p6 = multiply(subtract(b, d, size/2), add(g, h, size/2), size/2);
-    vector<vector<int>> p7 = multiply(subtract(c, a, size/2), add(e, f, size/2), size/2);
+    vector<vector<int>> p1 = multiply(a, subtract(f, h, size/2));
+    vector<vector<int>> p2 = multiply(add(a, b, size/2), h);
+    vector<vector<int>> p3 = multiply(add(c, d, size/2), e);
+    vector<vector<int>> p4 = multiply(d, subtract(g, e, size/2));
+    vector<vector<int>> p5 = multiply(add(a, d, size/2), add(e, h, size/2));
+    vector<vector<int>> p6 = multiply(subtract(b, d, size/2), add(g, h, size/2));
+    vector<vector<int>> p7 = multiply(subtract(c, a, size/2), add(e, f, size/2));
 
     vector<vector<int>> top_left = add(add(p4, p5, size/2), subtract(p6, p2, size/2), size/2);
     vector<vector<int>> top_right = add(p1, p2, size/2);
     vector<vector<int>> bottom_left = add(p3, p4, size/2);
     vector<vector<int>> bottom_right = add(add(p5, p7, size/2), subtract(p1, p3, size/2), size/2);
 
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
+    for (int i = 0; i < size - prune; i++) {
+        for (int j = 0; j < size - prune; j++) {
             if (i < size/2 && j < size/2) {
                 result[i][j] = top_left[i][j];
             } else if (i < size/2 && j >= size/2) {
@@ -159,6 +179,9 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two, i
             }
         }
     }
+
+
+
 
     return result;
 }
@@ -209,7 +232,7 @@ int main(int argc, char* argv[]) {
 
     cout << "dim: " << dim << endl;
 
-    print(multiply(mat_a, mat_b, dim));
+    print(multiply(mat_a, mat_b));
 
     return 0;
 }
