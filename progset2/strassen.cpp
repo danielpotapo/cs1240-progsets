@@ -24,7 +24,7 @@ ptr to an element of a vector: int* ptr = &vec.at(<index>);
 
 
 
-
+#include <random>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -32,16 +32,21 @@ ptr to an element of a vector: int* ptr = &vec.at(<index>);
 #include <vector>
 #include <cassert>
 #include <chrono>
+#include <algorithm>
+#include <cmath>    
 
-// using chrono::high_resolution_clock;
-// using chrono::duration_cast;
-// using chrono::duration;
-// using chrono::milliseconds;
+
 using namespace std;
+using chrono::high_resolution_clock;
+using chrono::duration_cast;
+using chrono::duration;
+using chrono::milliseconds;
 
 vector<vector<int>> mat_a;
 vector<vector<int>> mat_b;
 vector<vector<int>> output;
+mt19937 rng; 
+
 
 
 int flag;       // user-provided flag
@@ -239,23 +244,59 @@ int main(int argc, char* argv[]) {
         cout << "not enough args" << endl;
         return 1;
     }
-    
-    string line;
+
     flag = stoi(argv[1]);
     dim = stoi(argv[2]);
+
+    // run tests
+    if (flag != 0) {
+        for (int j = 0; j < 2; j++) {
+            int shortest_val = 1000;
+            double shortest_time = 1000;
+            mat_a.clear();
+            mat_b.clear();
+            uniform_real_distribution<double> dis(-9, 9);
+
+            for (int i = 0; i < dim; i++) {
+                mat_a.push_back(vector<int>());
+                mat_b.push_back(vector<int>());
+                for (int j = 0; j < dim; j++) {
+                    mat_a[i].push_back(dis(rng));
+                    mat_b[i].push_back(dis(rng));  
+                }
+            }
+
+            auto previous = high_resolution_clock::now();
+            naive_multiply(mat_a, mat_b);
+            duration<double, milli> naive_time = high_resolution_clock::now() - previous;
+            cout << "naive time taken: " << naive_time.count() << endl;
+
+            for (int i = 1; i < dim/2; i+=4) {
+                threshold = i;
+                previous = high_resolution_clock::now();
+                multiply(mat_a, mat_b);
+                duration<double, milli> time_taken = high_resolution_clock::now() - previous;
+                if (time_taken.count() < shortest_time) {
+                    shortest_time = time_taken.count();
+                    shortest_val = i;
+                }
+                cout << "time taken for " << i << ": " << time_taken.count() << endl;
+            }
+            cout << "SHORTEST VALUE:" << shortest_val << endl;
+        }
+        return 0;
+    } 
+
+
+    // run multiplication
+    string line;
     string file_name = argv[3];
-
-
     fstream reader(file_name);
+
     if (!reader.is_open()) {
         cout << "invalid file" << endl;
         return 1;
-        }    
-
-    // if (a_str.size() < dim * dim || b_str.size() < dim * dim) {
-    //     cout << a_vec.size() << " AND " << b_vec.size() << endl;
-    //     return 0;
-    // }
+    }    
 
     // fill vector representations of the arrays
     for (int row = 0; row < dim; row++) {
@@ -288,8 +329,9 @@ int main(int argc, char* argv[]) {
 
     // cout << "OUTPUT" << endl;
 
-    threshold = 5;
+    threshold = 15;
     print_diag(multiply(mat_a, mat_b));
+
 
 
     return 0;
