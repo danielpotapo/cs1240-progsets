@@ -71,6 +71,33 @@ void print_diag(vector<vector<int>> mat) {
     }
 }
 
+int add_diag(vector<vector<int>> mat) {
+    int sum = 0;
+    for (int i = 0; i < mat.size(); i++) {
+        sum += mat[i][i];
+    }
+    return sum;
+}
+
+
+vector<vector<int>> generate(double p) {
+    vector<vector<int>> output;
+    uniform_real_distribution<double> dis(0, 1);
+
+    for (int i = 0; i < 1024; i++) {
+        output.push_back(vector<int>());
+        for (int j = 0; j < 1024; j++) {
+            if (dis(rng) <= p) {
+                output[i].push_back(1);
+            } else {
+                output[i].push_back(0);
+            }
+        }
+    }
+
+    return output;
+}
+
 
 vector<vector<int>> add(vector<vector<int>> one, vector<vector<int>> two, int size) {
     vector<vector<int>> result = one;
@@ -124,7 +151,6 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {
     int prune = 0;
     vector<vector<int>> result = one;
 
-
     if (one.size() % 2 != 0 && one.size() != 1) {
         prune = 1;
         one.push_back(vector<int>());
@@ -153,7 +179,6 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {
     }
 
 
-    // eventually change this to indices of a single matrix
     vector<vector<int>> a;
     vector<vector<int>> b;
     vector<vector<int>> c;
@@ -162,9 +187,6 @@ vector<vector<int>> multiply(vector<vector<int>> one, vector<vector<int>> two) {
     vector<vector<int>> f;
     vector<vector<int>> g;
     vector<vector<int>> h;
-
-
-
 
     for (int i = 0; i < size/2; i++) {
         a.push_back(vector<int>());
@@ -248,8 +270,21 @@ int main(int argc, char* argv[]) {
     flag = stoi(argv[1]);
     dim = stoi(argv[2]);
 
+    // part 3
+    if (flag == 2) {
+        for (int i = 1; i <= 5; i++) {
+            vector<vector<int>> vec = generate(0.01 * i);
+            vector<vector<int>> result = multiply(vec, multiply(vec, vec));
+
+            cout << "for number " << i << ": " << add_diag(result)/6 << endl;
+        }
+
+        return 0;
+    }
+
+
     // run tests
-    if (flag != 0) {
+    if (flag == 1) {
         for (int j = 0; j < 2; j++) {
             int shortest_val = 1000;
             double shortest_time = 1000;
@@ -271,7 +306,7 @@ int main(int argc, char* argv[]) {
             duration<double, milli> naive_time = high_resolution_clock::now() - previous;
             cout << "naive time taken: " << naive_time.count() << endl;
 
-            for (int i = 1; i < dim/2; i+=4) {
+            for (int i = 1; i < dim/2; i++) {
                 threshold = i;
                 previous = high_resolution_clock::now();
                 multiply(mat_a, mat_b);
@@ -282,7 +317,7 @@ int main(int argc, char* argv[]) {
                 }
                 cout << "time taken for " << i << ": " << time_taken.count() << endl;
             }
-            cout << "SHORTEST VALUE:" << shortest_val << endl;
+            cout << "SHORTEST VALUE: " << shortest_val << endl;
         }
         return 0;
     } 
