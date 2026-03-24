@@ -306,7 +306,7 @@ int main(int argc, char* argv[]) {
             duration<double, milli> naive_time = high_resolution_clock::now() - previous;
             cout << "naive time taken: " << naive_time.count() << endl;
 
-            for (int i = 1; i < dim/2; i++) {
+            for (int i = 10; i < dim/2; i++) {
                 threshold = i;
                 previous = high_resolution_clock::now();
                 multiply(mat_a, mat_b);
