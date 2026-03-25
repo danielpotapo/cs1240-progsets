@@ -314,65 +314,77 @@ int main(int argc, char* argv[]) {
 
     // run tests
     if (flag == 1) {
-        vector<double> counts;
+        for (int k = 200; k <= 400; k+=5) {
+            dim = k;
+            total_dim = get_pow(dim);
+            to_cut = total_dim - dim;
+            vector<double> counts;
 
-        for (int i = 0; i < dim/2; i++) {
-            counts.push_back(0);
-        }
+            for (int i = 0; i < dim/2; i++) {
+                counts.push_back(0);
+            }
 
-        for (int j = 1; j <= 100; j++) {
-            int shortest_val = 1000;
-            double shortest_time = 1000;
-            mat_a.clear();
-            mat_b.clear();
-            mat_c.clear();
-            mat_d.clear();
-            uniform_real_distribution<double> dis(-9, 9);
+            for (int j = 1; j <= 5; j++) {
+                int shortest_val = 1000;
+                double shortest_time = 1000;
+                mat_a.clear();
+                mat_b.clear();
+                mat_c.clear();
+                mat_d.clear();
+                uniform_real_distribution<double> dis(-9, 9);
 
-            // fill matrices
-            for (int i = 0; i < total_dim ; i++) {
-                for (int j = 0; j < total_dim; j++) {
-                    if (i < dim && j < dim) {
-                        int num1 = dis(rng);
-                        int num2 = dis(rng);
+                // fill matrices
+                for (int i = 0; i < total_dim ; i++) {
+                    for (int j = 0; j < total_dim; j++) {
+                        if (i < dim && j < dim) {
+                            int num1 = dis(rng);
+                            int num2 = dis(rng);
 
-                        mat_a.push_back(num1);
-                        mat_b.push_back(num2);  
-                        mat_c.push_back(num1);
-                        mat_d.push_back(num2);
-                    } else {
-                        mat_c.push_back(0);
-                        mat_d.push_back(0);
+                            mat_a.push_back(num1);
+                            mat_b.push_back(num2);  
+                            mat_c.push_back(num1);
+                            mat_d.push_back(num2);
+                        } else {
+                            mat_c.push_back(0);
+                            mat_d.push_back(0);
+                        }
                     }
+                }
+
+                // naive test
+                auto previous = high_resolution_clock::now();
+
+                long* naive = naive_multiply(mat_a.data(), mat_b.data(), dim, dim, dim);
+                duration<double, milli> naive_time = high_resolution_clock::now() - previous;
+                delete[] naive;
+                counts[0] += naive_time.count();
+
+                // general test
+                for (int i = 10; i < dim/2; i++) {
+                    threshold = i;
+
+                    // calculate time
+                    previous = high_resolution_clock::now();
+                    long* general = mat_mult(mat_c.data(), mat_d.data(), dim, dim, dim, to_cut);
+                    duration<double, milli> time_taken = high_resolution_clock::now() - previous;
+                    delete[] general;
+
+                    counts[i] += time_taken.count();
                 }
             }
 
-            // naive test
-            auto previous = high_resolution_clock::now();
+            int min_runtime = 10000;
+            int min_value = 0;
 
-            long* naive = naive_multiply(mat_a.data(), mat_b.data(), dim, dim, dim);
-            duration<double, milli> naive_time = high_resolution_clock::now() - previous;
-            delete[] naive;
-            counts[0] += naive_time.count();
-
-            // general test
-            for (int i = 10; i < dim/2; i++) {
-                threshold = i;
-
-                // calculate time
-                previous = high_resolution_clock::now();
-                long* general = mat_mult(mat_c.data(), mat_d.data(), dim, dim, dim, to_cut);
-                duration<double, milli> time_taken = high_resolution_clock::now() - previous;
-                delete[] general;
-
-                counts[i] += time_taken.count();
+            for (int i = 10; i < counts.size(); i++) {
+                if (counts[i] < min_runtime) {
+                    min_runtime = counts[i];
+                    min_value = i;
+                }
             }
-            cout << "just finished trial " << j << endl;
+            cout << min_value << endl;
         }
 
-        for (int i = 0; i < counts.size(); i++) {
-            cout << "count of " << i << ": " << counts[i] / 100 << endl;
-        }
         return 0;
     } 
 
@@ -413,19 +425,6 @@ int main(int argc, char* argv[]) {
 
     dim = total_dim;
     reader.close();
-
-    
-
-    // print both matrices (bug checking)
-    // cout << "MATRIX A" << endl;
-    // print(mat_a.data(), dim);
-
-
-    // cout << "MATRIX B" << endl;
-    // print(mat_b.data(), dim);
-
-
-    // cout << "OUTPUT" << endl;
 
     threshold = 5;
     print_diag(mat_mult(mat_a.data(), mat_b.data(), dim, dim, dim, to_cut), dim - to_cut);
