@@ -14,8 +14,6 @@ too long
 "./strassen 2 <dimension> matrix.txt": run a single trial of part 3
 */
 
-
-
 #include <random>
 #include <iostream>
 #include <fstream>
@@ -26,7 +24,6 @@ too long
 #include <chrono>
 #include <algorithm>
 #include <cmath>    
-
 
 using namespace std;
 using chrono::high_resolution_clock;
@@ -40,13 +37,9 @@ vector<long> mat_c;
 vector<long> mat_d;
 mt19937 rng; 
 
-
-
 int flag;       // user-provided flag
 int dim;        // dimension of matrix
 int threshold;
-
-
 
 int index(int i, int j, int stride) {
     return i * stride + j;
@@ -64,9 +57,6 @@ int get_pow(int dimension) {
     return (int) pow(2, exponent);
 }
 
-
-
-
 void print(long* mat, int size) {
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
@@ -75,7 +65,6 @@ void print(long* mat, int size) {
         cout << endl;
     }
 }
-
 
 void print_diag(long* mat, int size) {
     for (int i = 0; i < size; i++) {
@@ -90,7 +79,6 @@ long add_diag(long* mat, int size) {
     }
     return sum;
 }
-
 
 long* generate(double p) {
     long* output = new long[1024 * 1024];
@@ -111,7 +99,6 @@ long* generate(double p) {
 
     return output;
 }
-
 
 long* add(long* one, long* two, int size, int s1, int s2) {
     long* result = new long[size * size];
@@ -137,7 +124,6 @@ long* subtract(long* one, long* two, int size, int s1, int s2) {
     return result;
 }
 
-
 long* naive_multiply(long* one, long* two, int size, int s1, int s2) {
     long* result = new long[size * size];
 
@@ -154,7 +140,6 @@ long* naive_multiply(long* one, long* two, int size, int s1, int s2) {
     return result;
 }
 
-
 long* multiply(long* one, long* two, int size, int s1, int s2) {   // start is the top left
     
     if (size <= threshold) {
@@ -165,7 +150,6 @@ long* multiply(long* one, long* two, int size, int s1, int s2) {   // start is t
 
     long* result = new long[size * size];
 
-
     long* a = &one[index(0, 0, s1)];
     long* b = &one[index(0, size/2, s1)];
     long* c = &one[index(size/2, 0, s1)];
@@ -174,7 +158,6 @@ long* multiply(long* one, long* two, int size, int s1, int s2) {   // start is t
     long* f = &two[index(0, size/2, s2)];
     long* g = &two[index(size/2, 0, s2)];
     long* h = &two[index(size/2, size/2, s2)];
-
 
     long* p1_1 = subtract(f, h, size/2, s2, s2);
     long* p1 = multiply(a, p1_1, size/2, s1, size/2);
@@ -200,7 +183,6 @@ long* multiply(long* one, long* two, int size, int s1, int s2) {   // start is t
     long* p7_2 = add(e, f, size/2, s2, s2);
     long* p7 = multiply(p7_1, p7_2, size/2, size/2, size/2);
 
-
     long* tl_1 = add(p4, p5, size/2, size/2, size/2);
     long* tl_2 = subtract(p6, p2, size/2, size/2, size/2);
     long* top_left = add(tl_1,tl_2 , size/2, size/2, size/2);
@@ -211,7 +193,6 @@ long* multiply(long* one, long* two, int size, int s1, int s2) {   // start is t
     long* br_1 = add(p5, p7, size/2, size/2, size/2);
     long* br_2 = subtract(p1, p3, size/2, size/2, size/2);
     long* bottom_right = add(br_1, br_2, size/2, size/2, size/2);
-
 
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
@@ -276,7 +257,6 @@ long* mat_mult(long* one, long* two, int size, int s1, int s2, int cut) {
     return result;
 }
 
-
 int main(int argc, char* argv[]) {
     if (argc < 4) {
         cout << "not enough args" << endl;
@@ -287,8 +267,6 @@ int main(int argc, char* argv[]) {
     dim = stoi(argv[2]);
     int total_dim = get_pow(dim);
     int to_cut = total_dim - dim;
-
-    
 
     // part 3
     if (flag == 2) {
@@ -310,7 +288,6 @@ int main(int argc, char* argv[]) {
 
         return 0;
     }
-
 
     // run tests
     if (flag == 1) {
@@ -388,7 +365,6 @@ int main(int argc, char* argv[]) {
         return 0;
     } 
 
-
     // run multiplication
     string line;
     string file_name = argv[3];
@@ -398,7 +374,6 @@ int main(int argc, char* argv[]) {
         cout << "invalid file" << endl;
         return 1;
     }    
-
 
     // fill vector representations of the arrays
     for (int i = 0; i < total_dim; i++) {
