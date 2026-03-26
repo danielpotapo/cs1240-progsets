@@ -257,6 +257,68 @@ long* mat_mult(long* one, long* two, int size, int s1, int s2, int cut) {
     return result;
 }
 
+int run_test() {
+    int total_dim;
+    int to_cut;
+    for (int k = 15; k <= 500; k++) {
+            double naive_time = 0;
+            double strassen_time = 0;
+            threshold = k - 1;
+
+            dim = k; 
+            total_dim = dim;
+
+            if (dim % 2 == 0) {
+                to_cut = 0;
+            } else {
+                to_cut = 1;
+                total_dim++;
+            }
+
+            mat_a.clear();
+            mat_b.clear();
+            mat_c.clear();
+            mat_d.clear();
+            uniform_real_distribution<double> dis(1, 9);
+
+            for (int i = 0; i < total_dim; i++) {
+                    for (int j = 0; j < total_dim; j++) {
+                        if (i < dim && j < dim) {
+                            int num1 = round(dis(rng));
+                            int num2 = round(dis(rng));
+
+                            mat_a.push_back(num1);
+                            mat_b.push_back(num2);  
+                            mat_c.push_back(num1);
+                            mat_d.push_back(num2);
+                        } else {
+                            mat_c.push_back(0);
+                            mat_d.push_back(0);
+                        }
+                    }
+            }
+
+            auto previous = high_resolution_clock::now();
+            long* naive = naive_multiply(mat_a.data(), mat_b.data(), dim, dim, dim);
+            duration<double, milli> naive_time_taken = high_resolution_clock::now() - previous;
+            delete[] naive;
+            naive_time = naive_time_taken.count();
+
+            previous = high_resolution_clock::now();
+            long* general = mat_mult(mat_c.data(), mat_d.data(), dim, dim, dim, to_cut);
+            duration<double, milli> strassen_time_taken = high_resolution_clock::now() - previous;
+            delete[] general;
+            strassen_time = strassen_time_taken.count();
+
+            if (strassen_time < naive_time) {
+                // cout << "cutoff is " << k << endl;
+                return k;
+            }
+        }
+    cout << "something has gone very wrong" << endl;
+    return -1;
+}
+
 int main(int argc, char* argv[]) {
     if (argc < 4) {
         cout << "not enough args" << endl;
@@ -291,77 +353,16 @@ int main(int argc, char* argv[]) {
 
     // run tests
     if (flag == 1) {
-        for (int k = 200; k <= 400; k+=5) {
-            dim = k;
-            total_dim = get_pow(dim);
-            to_cut = total_dim - dim;
-            vector<double> counts;
-
-            for (int i = 0; i < dim/2; i++) {
-                counts.push_back(0);
+        int sum = 0;
+        for (int i = 0; i < 10000; i++) {
+            if (i % 1000 == 0) {
+                cout << i << endl;
             }
-
-            for (int j = 1; j <= 5; j++) {
-                int shortest_val = 1000;
-                double shortest_time = 1000;
-                mat_a.clear();
-                mat_b.clear();
-                mat_c.clear();
-                mat_d.clear();
-                uniform_real_distribution<double> dis(-9, 9);
-
-                // fill matrices
-                for (int i = 0; i < total_dim ; i++) {
-                    for (int j = 0; j < total_dim; j++) {
-                        if (i < dim && j < dim) {
-                            int num1 = dis(rng);
-                            int num2 = dis(rng);
-
-                            mat_a.push_back(num1);
-                            mat_b.push_back(num2);  
-                            mat_c.push_back(num1);
-                            mat_d.push_back(num2);
-                        } else {
-                            mat_c.push_back(0);
-                            mat_d.push_back(0);
-                        }
-                    }
-                }
-
-                // naive test
-                auto previous = high_resolution_clock::now();
-
-                long* naive = naive_multiply(mat_a.data(), mat_b.data(), dim, dim, dim);
-                duration<double, milli> naive_time = high_resolution_clock::now() - previous;
-                delete[] naive;
-                counts[0] += naive_time.count();
-
-                // general test
-                for (int i = 10; i < dim/2; i++) {
-                    threshold = i;
-
-                    // calculate time
-                    previous = high_resolution_clock::now();
-                    long* general = mat_mult(mat_c.data(), mat_d.data(), dim, dim, dim, to_cut);
-                    duration<double, milli> time_taken = high_resolution_clock::now() - previous;
-                    delete[] general;
-
-                    counts[i] += time_taken.count();
-                }
-            }
-
-            int min_runtime = 10000;
-            int min_value = 0;
-
-            for (int i = 10; i < counts.size(); i++) {
-                if (counts[i] < min_runtime) {
-                    min_runtime = counts[i];
-                    min_value = i;
-                }
-            }
-            cout << min_value << endl;
+            sum += run_test();
         }
-
+        sum /= 10000;
+        cout << sum << endl;
+        
         return 0;
     } 
 
