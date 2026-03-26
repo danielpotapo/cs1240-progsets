@@ -6,8 +6,13 @@
 #include <cassert>
 #include <array>
 #include <algorithm>
+#include <chrono>
 
 using namespace std;
+using chrono::high_resolution_clock;
+using chrono::duration_cast;
+using chrono::duration;
+using chrono::milliseconds;
 
 // Mersenne Twister RNG stuff. Pseudo rng for preserving independence across different trials. source: https://codereview.stackexchange.com/questions/180063/mersenne-twister-random-number-generator-function?lq=1
 mt19937 rng; 
@@ -86,6 +91,29 @@ bool hypercubeCondition(int i, int j) {
 
 //-------------------------------- kruskal's algorithm ----------------------------------------//
 
+double findPruningThreshold(int dim, int n) {
+    if (dim == 0) {
+        return 2.622 * log(n) / n;
+    } else if (dim == 2) {
+        return 1.429 * sqrt(log(n) / n);
+    } else if (dim == 3) {
+        return 1.603 * pow(log(n) / n, 1.0/3.0);
+    } else if (dim == 4) {
+        return 1.549 * pow(log(n) / n, 0.25);
+    } else {
+        return 10000;  // do not prune if dim == 1
+    }
+}
+
+// returns a boolean representing whether the edge weight should be pruned
+bool prune(int dim, int n, double weight) {
+    if (weight > findPruningThreshold(dim, n)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void makeSet(Vert& x) {
     vertices.push_back(x);
     vertices.back().rank = 0;
@@ -137,19 +165,25 @@ double kruskal(int dim, int num_vert) {
     for (int i = 0; i < num_vert; i++) {
         for (int j = i + 1; j < num_vert; j++) {
             if (dim == 1 && hypercubeCondition(i, j) || dim != 1 && nDimensionalCondition(i, j)) {
-                Ed add;
-                add.start = &vertices[i];
-                add.end = &vertices[j];
+                double weight;
 
                 // weight logic (correct models)
                 if (dim == 0 || dim == 1) {
-                    add.weight = generateUniformWeight();
+                    weight = generateUniformWeight();
                 } 
                 else {
-                    add.weight = generateEuclideanDistance(i, j, dim);
+                    weight = generateEuclideanDistance(i, j, dim);
                 }
 
-                edges.push_back(add);
+                if (prune(dim, num_vert, weight)) {
+                    continue;
+                } 
+
+                Ed add;
+                add.start = &vertices[i];
+                add.end = &vertices[j];
+                add.weight = weight;
+                edges.push_back(add);   
             }
         }
     }
@@ -193,6 +227,11 @@ double kruskal(int dim, int num_vert) {
 //-------------------------------- main test logic sequence  -------------------------------------//
 
 int main(int argc, char* argv[]) {    
+
+    if (argc != 5) {    // not enough arguments provided
+        return 0;
+    }
+
     int testing = stoi(argv[1]);
     int numpoints = stoi(argv[2]);
     int numtrials = stoi(argv[3]);
@@ -201,30 +240,35 @@ int main(int argc, char* argv[]) {
     // remember to clear the graph afterwards
 
     double result = 0;
+    auto prev = high_resolution_clock::now();
 
     if (testing == 1) {
         for (int k = 1; k <= 4; k++) {
             cout << "---------- DIMENSION = " << k << "------------" << endl;
-            for (int j = 7; j <= 11; j++) {
+            for (int j = 7; j <= 18; j++) {
                 numpoints = pow(2.0, j);
                 for (int i = 0; i < numtrials; i++) {
                     // seed randomness once per trial
                     random_device rd;
                     rng.seed(rd());
                     
-                    result += kruskal(k, numpoints);
+                    kruskal(k, numpoints);
 
                     vertices.clear();
                     output.clear();
                 }     
                 avgWeight = avgWeight / numtrials;
 
-                cout << "TRIAL for npoints = " << pow(2.0, j) << ": " << endl;
-                cout << "maximum: " << maxWeight << endl;
-                // cout << "avg: " << avgWeight << endl;
+                // cout << "TRIAL for npoints = " << pow(2.0, j) << ": " << endl;
+                // cout << "maximum: " << maxWeight << endl;
+                duration<double, milli> time_taken = high_resolution_clock::now() - prev;
+
+                cout << "Average Weight: " << avgWeight << " in " << time_taken.count()
+                << " milliseconds" << endl;
                 
                 maxWeight = 0;
                 avgWeight = 0;
+                prev = high_resolution_clock::now();
             }
         }
         
@@ -245,9 +289,6 @@ int main(int argc, char* argv[]) {
         cout << result << " " << numpoints << " " << numtrials << " " << dimension << endl;
 
     }
-    
-
-    
     
     return 0;
 }
