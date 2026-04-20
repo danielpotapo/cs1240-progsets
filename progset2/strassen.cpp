@@ -125,20 +125,22 @@ long* subtract(long* one, long* two, int size, int s1, int s2) {
 }
 
 long* naive_multiply(long* one, long* two, int size, int s1, int s2) {
-    long* result = new long[size * size];
+    long* result = new long[size * size]();
+
 
     for (int row = 0; row < size; row++) {
-        for (int col = 0; col < size; col++) {
-            long sum = 0;
-            for (int e = 0; e < size; e++) {
-                sum += element(row, e, one, s1) * element(e, col, two, s2);
+        for (int e = 0; e < size; e++) {
+            long current = element(row, e, one, s1);
+            for (int col = 0; col < size; col++) {
+                result[index(row, col, size)] += current * element(e, col, two, s2);
             }
-            result[index(row, col, size)] = sum;   
         }
     }
 
     return result;
 }
+
+
 
 long* multiply(long* one, long* two, int size, int s1, int s2) {   // start is the top left
     
@@ -374,8 +376,8 @@ int main(int argc, char* argv[]) {
     if (!reader.is_open()) {
         cout << "invalid file" << endl;
         return 1;
-    }    
-
+    }
+    
     // fill vector representations of the arrays
     for (int i = 0; i < total_dim; i++) {
         for (int j = 0; j < total_dim; j++) {
